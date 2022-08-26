@@ -1,0 +1,233 @@
+# Данный файл - заметки выполненные в процессе прохождения курса по FastAPI и Celery
+# https://testdriven.io/courses/fastapi-celery
+
+# Установка Redis в докер:
+docker run -p 6379:6379 --name some-redis -d redis
+
+# Проверка работы Redis:
+docker exec -it some-redis redis-cli ping
+
+# Запуск приложения FastAPI:
+uvicorn main:app --reload
+
+# Запуск воркера Celery:
+celery -A main.celery worker --loglevel=info
+# Запуск воркера Celery (для Windows):
+celery -A main.celery worker --loglevel=info --pool=solo
+
+# Запуск первой задачи в Celery:
+# > python
+>>> from manage import run_demo_task
+>>> task = run_demo_task()
+# output:
+# Running celery demo task "divide(1, 2)"
+# 1 state=PENDING, result=None
+# 2 state=PENDING, result=None
+# 3 state=PENDING, result=None
+# 4 state=PENDING, result=None
+# 5 state=SUCCESS, result=0.5
+
+
+# task = divide.delay(1, 0)
+print(task.state, task.result)  # FAILURE ZeroDivisionError('division by zero')
+
+# Запуск сервера мониторинга Flower:
+celery -A main.celery flower --port=5555
+
+# Получение статуса у ранее запущенной задачи по GUID
+from celery.result import AsyncResult
+task = AsyncResult('da04679c-fd30-4933-ae7b-3e1f5b941d90')
+print(task.state, task.result)  # FAILURE ZeroDivisionError('division by zero')
+
+# Инициализация alembic
+alembic init alembic
+
+# Создание пустой БД SQLite3
+(env)$ python
+
+>>> from main import app
+>>> from project.database import Base, engine
+>>> Base.metadata.create_all(bind=engine)
+>>> exit()
+
+# Запустить миграцию БД alembic
+(env)$ alembic revision --autogenerate
+
+# Создать новую миграцию alembic после добавления новой модели users
+(env)$ alembic revision --autogenerate
+# INFO  [alembic.autogenerate.compare] Detected added table 'users'
+
+# Выполнить обновление БД до последней миграции
+(env)$ alembic upgrade head
+# Create users table
+
+
+# Проверка работы Docker и Docker-compose
+$ docker --version
+Docker version 20.10.7, build f0df350
+
+$ docker-compose --version
+docker-compose version 1.29.2, build 5becea4c
+
+
+# Создание образа docker:
+$ docker-compose build
+
+# Запуск приложения в docker-compose:
+$ docker-compose up -d
+
+# Просмотр логов в docker-compose:
+$ docker-compose logs
+$ docker-compose logs -f
+$ docker-compose logs celery_worker
+$ docker-compose logs -f celery_worker
+
+
+# Вход в консоль контейнера в docker-compose:
+$ docker-compose exec <service-name> bash
+$ docker-compose exec web bash
+$ docker-compose exec web python
+
+# Вход в консоль контейнера который в данный момент не запущен:
+# флаг --rm указывает докуру удалить контейнер после выхода из bash
+$ docker-compose run --rm web bash
+
+
+# Проверка работы docker-compose после запуска. Запуск в двух терминалах:
+# терминал 1
+$ docker-compose exec web python
+>>> from manage import run_demo_task
+>>> run_demo_task()
+# терминал 2
+$ docker-compose logs celery_worker
+# output:
+# celery_worker_1  | [2022-08-19 12:10:49,346: INFO/MainProcess] Task project.users.tasks.divide[01ae1ae4-9b3a-4751-912d-6c8eed85d20e] received
+# celery_worker_1  | [2022-08-19 12:10:54,355: INFO/ForkPoolWorker-8] Task project.users.tasks.divide[01ae1ae4-9b3a-4751-912d-6c8eed85d20e] succeeded in 5.007303799999136s: 0.5
+
+
+# Просмотр результатов работы celery прямо в redis:
+# $ docker-compose exec redis sh
+# $ redis-cli
+$ docker-compose exec redis redis-cli
+>>> MGET celery-task-meta-01ae1ae4-9b3a-4751-912d-6c8eed85d20e
+# output:
+# 1) "{\"status\": \"SUCCESS\", \"result\": 0.5, \"traceback\": null, \"children\": [], \"date_done\": \"2022-08-19T12:10:54.353792\", \"task_id\": \"01ae1ae4-9b3a-4751-912d-6c8eed85d20e\"}"
+
+
+# Просмотр результатов работы celery в flower:
+# открыть в браузере http://localhost:5557/
+
+# Открыть FastAPI:
+# открыть в браузере http://localhost:8010/
+
+
+# + Отладка Celery в docker с помощью rdb.set_trace()
+# 1. Добавим rdb.set_trace() в нужное место
+# @shared_task
+#def divide(x, y):
+#    from celery.contrib import rdb
+#    rdb.set_trace()
+#    # ...
+
+# 2. Выполним вызов run_demo_task()
+
+# 3. Проверим логи и увидим приглашение подключиться по telnet
+$ docker-compose logs -f
+# celery_worker_1  | Remote Debugger:6903: Waiting for client...
+
+# 4. Подключимся к rdb по telnet
+$ docker-compose exec celery_worker bash
+>>> (container)$ telnet 127.0.0.1 6903
+# Trying 127.0.0.1...
+# Connected to 127.0.0.1.
+# Escape character is '^]'.
+# > /app/project/users/tasks.py(9)divide()
+# -> import time
+# (Pdb):
+# (Pdb): args
+# x = 1
+# y = 2
+
+# 5. Чтобы выйти из отладки и продолжить выполнение кода нужно нажать "c" (continue)
+# 6. Профит
+# - Отладка Celery в docker с помощью rdb.set_trace()
+
+
+# + Problem 1: Blocking Web Process
+$ docker-compose up -d --build
+> http://localhost:8010/users/form/
+> Нажимаем Submit и смотрим в консоли браузера отладочную информацию
+# - Problem 1: Blocking Web Process
+
+
+# + Problem 2: Webhook Handler
+$ docker-compose up -d --build
+$ curl -X POST http://localhost:8010/users/webhook_test_bad/ -d {'data':'ping'}
+$ curl -X POST http://localhost:8010/users/webhook_test_good/ -d {'data':'ping'}
+# - Problem 2: Webhook Handler
+
+
+# + Web-sockets example
+$ docker-compose up -d --build
+$ docker-compose logs -f
+> http://localhost:8010/users/form_ws/
+> Нажимаем Submit смотрим в консоль браузера или в Network -> WS -> Messages
+# - Web-sockets example
+
+
+# + Socket.io example
+$ docker-compose up -d --build
+$ docker-compose logs -f
+> http://localhost:8010/users/form_socketio/
+> Нажимаем Submit смотрим в консоль браузера или в Network -> WS -> Messages
+# - Socket.io example
+
+
+# + Celery multiple queues example
+
+$ docker-compose down -v
+$ docker-compose up -d --build
+$ docker-compose logs -f
+
+$ docker-compose run --rm celery_worker celery -A main.celery worker  -l info -Q low_priority
+
+# - Celery multiple queues example
+
+
+# + Celery routing example
+$ docker-compose up -d --build
+$ docker-compose exec web bash
+(container)$ python
+
+>>> from main import app
+>>> from project.users.tasks import divide
+# enqueue task to the default queue
+>>> divide.delay(1, 2)
+
+>>> from project.users.tasks import dynamic_example_one, dynamic_example_two, dynamic_example_three
+# enqueue task to the default queue
+>>> dynamic_example_one.delay()
+# enqueue task to the high_priority queue
+>>> dynamic_example_three.delay()
+# enqueue task to the low_priority queue
+>>> dynamic_example_two.delay()
+# - Celery routing example
+
+
+# + database transactions example
+$ docker-compose logs -f
+>>> http://localhost:8010/users/transaction_celery/
+# - database transactions example
+
+
+# + Logging example
+$ docker-compose up -d --build
+$ docker-compose exec web bash
+(container)$ python
+
+>>> from main import app
+>>> from project.users.tasks import task_test_logger
+>>> task_test_logger.delay()
+
+# Теперь вы можете увидеть логи сelery в файле celery_tasks.log.log
+# - Logging example
