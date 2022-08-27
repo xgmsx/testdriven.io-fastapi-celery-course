@@ -239,3 +239,15 @@ $ docker-compose exec web pytest
 $ docker-compose exec web pytest --cov=.
 
 # - pytest example
+
+
+# + tdd example
+# Apply the migrations:
+$ docker-compose exec web bash
+(container)$ alembic revision --autogenerate
+(container)$ alembic upgrade head
+
+
+docker-compose exec web pytest tests/tdd
+docker-compose exec web pytest tests/tdd --cov=./project/tdd
+# - tdd example

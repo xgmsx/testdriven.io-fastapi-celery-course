@@ -5,11 +5,13 @@ from functools import lru_cache
 from kombu import Queue
 
 
+# + Celery routing example
 def route_task(name, args, kwargs, options, task=None, **kw):
     if ":" in name:
         queue, _ = name.split(":")
         return {"queue": queue}
     return {"queue": "default"}
+# - Celery routing example
 
 
 class BaseConfig:
@@ -46,7 +48,6 @@ class BaseConfig:
     # - Celery multiple queues example
 
     # + Celery routing example
-
     # # manual routing:
     # CELERY_TASK_ROUTES = {
     #     "project.users.tasks.*": {
@@ -56,8 +57,11 @@ class BaseConfig:
 
     # dynamic routing:
     CELERY_TASK_ROUTES = (route_task,)
-
     # - Celery routing example
+
+    # + tdd example
+    UPLOADS_DEFAULT_DEST: str = str(BASE_DIR / "upload")
+    # - tdd example
 
 
 class DevelopmentConfig(BaseConfig):

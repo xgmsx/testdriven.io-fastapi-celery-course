@@ -6,8 +6,17 @@ os.environ["FASTAPI_CONFIG"] = "testing"  # noqa
 
 from pytest_factoryboy import register as register_factory
 from project.users.factories import UserFactory
+from project.tdd.factories import MemberFactory
 
 register_factory(UserFactory)
+register_factory(MemberFactory)
+
+
+# + tdd example
+@pytest.fixture(autouse=True)
+def tmp_upload_dir(tmpdir, settings):
+    settings.UPLOADS_DEFAULT_DEST = tmpdir.mkdir("tmp")
+# + tdd example
 
 
 @pytest.fixture
