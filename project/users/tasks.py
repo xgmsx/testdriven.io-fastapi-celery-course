@@ -9,6 +9,7 @@ from celery.signals import task_postrun, after_setup_logger
 from celery.utils.log import get_task_logger
 
 from project.database import db_context
+from project.celery_utils import custom_celery_task
 
 logger = get_task_logger(__name__)
 
@@ -90,7 +91,7 @@ def task_process_notification_old(self):
 @shared_task(bind=True, autoretry_for=(Exception,),
              retry_backoff=5, retry_jitter=True,
              retry_kwargs={"max_retries": 5})
-def task_process_notification(self):
+def task_process_notification_old2(self):
     if not random.choice([0, 1]):
         # mimic random error
         raise Exception()
@@ -112,6 +113,19 @@ def task_process_notification_base_class(self):
 
 
 # + Retrying failed task
+
+
+# + Custom task wrapper
+
+@custom_celery_task(max_retries=3)
+def task_process_notification():
+    if not random.choice([0, 1]):
+        # mimic random error
+        raise Exception()
+
+    requests.post("https://httpbin.org/delay/5")
+
+# - Custom task wrapper
 
 
 # + Celery Beat example
