@@ -231,3 +231,11 @@ $ docker-compose exec web bash
 
 # Теперь вы можете увидеть логи сelery в файле celery_tasks.log.log
 # - Logging example
+
+# + pytest example
+
+$ docker-compose up -d --build
+$ docker-compose exec web pytest
+$ docker-compose exec web pytest --cov=.
+
+# - pytest example

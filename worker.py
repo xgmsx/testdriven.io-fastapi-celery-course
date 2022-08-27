@@ -4,8 +4,8 @@ def celery_worker():
     import subprocess
 
     def run_worker():
-        # subprocess.call(["celery", "-A", "main.celery", "worker", "--loglevel=info"])
         # + Celery multiple queues example
+        # subprocess.call(["celery", "-A", "main.celery", "worker", "--loglevel=info"])
         subprocess.call(["celery", "-A", "main.celery", "worker", "--loglevel=info", "-Q", "high_priority,default"])
         # - Celery multiple queues example
 
