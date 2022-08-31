@@ -403,11 +403,11 @@ query: container_memory_usage_bytes{name="fastapi-celery-prod_celery_worker_1"}
 
 # 1. SSL is more secure so it's highly recommended.
 
-CELERY_BROKER_USE_SSL = True
-CELERY_REDIS_BACKEND_USE_SSL = True
-
-REDIS_URL = "rediss://{username}:{password}@{host}:{port}?ssl_cert_reqs=CERT_NONE"
-CELERY_BROKER_URL = REDIS_URL
+# CELERY_BROKER_USE_SSL = True
+# CELERY_REDIS_BACKEND_USE_SSL = True
+#
+# REDIS_URL = "rediss://{username}:{password}@{host}:{port}?ssl_cert_reqs=CERT_NONE"
+# CELERY_BROKER_URL = REDIS_URL
 
 # 2. As mentioned, it's recommended to change the default queue name from celery to default
 #    and to set CELERY_TASK_CREATE_MISSING_QUEUES to False to prevent typos in your code. For example:
@@ -426,12 +426,11 @@ CELERY_BROKER_URL = REDIS_URL
 # CELERY_TASK_ACKS_LATE = True
 
 # 5. Time limit
-# a)
+# a) default
 # CELERY_TASK_SOFT_TIME_LIMIT = 15 * 60
 # CELERY_TASK_TIME_LIMIT = CELERY_TASK_SOFT_TIME_LIMIT + 30
 
-# b)
-# # per task when defined
+# b) per task when defined
 # @celery.task(time_limit=30, soft_time_limit=10)
 # def your_task():
 #     try:
@@ -439,8 +438,7 @@ CELERY_BROKER_URL = REDIS_URL
 #     except SoftTimeLimitExceeded:
 #         cleanup_in_a_hurry()
 
-# c)
-# # per task when called
+# c) per task when called
 # your_task.apply_async(args=[], kwargs={}, time_limit=30, soft_time_limit=10)
 
 # If the task exceeds the soft limit, SoftTimeLimitExceeded will be raised.
@@ -448,6 +446,8 @@ CELERY_BROKER_URL = REDIS_URL
 # Serializer
 
 # CELERY_TASK_SERIALIZER = json
+
+# Links:
 
 # https://docs.celeryq.dev/en/stable/history/whatsnew-4.0.html?highlight=ofair#ofair-is-now-the-default-scheduling-strategy
 # https://docs.celeryq.dev/en/stable/userguide/tasks.html#state
