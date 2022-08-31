@@ -47,6 +47,14 @@ class BaseConfig:
     )
     # - Celery multiple queues example
 
+    # + Best practics
+    CELERY_WORKER_PREFETCH_MULTIPLIER = 1
+    CELERY_TASK_ACKS_LATE = True
+    CELERY_TASK_SOFT_TIME_LIMIT = 15 * 60
+    CELERY_TASK_TIME_LIMIT = CELERY_TASK_SOFT_TIME_LIMIT + 30
+    CELERY_TASK_SERIALIZER = "json"
+    # - Best practics
+
     # + Celery routing example
     # # manual routing:
     # CELERY_TASK_ROUTES = {

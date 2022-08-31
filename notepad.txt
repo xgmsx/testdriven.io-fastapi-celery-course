@@ -251,3 +251,208 @@ $ docker-compose exec web bash
 docker-compose exec web pytest tests/tdd
 docker-compose exec web pytest tests/tdd --cov=./project/tdd
 # - tdd example
+
+
+# + deployment
+
+# 1. test
+
+$ docker-compose stop
+$ docker-compose -f docker-compose.prod.yml -p fastapi-celery-prod up -d --build
+$ docker-compose -f docker-compose.prod.yml -p fastapi-celery-prod logs -f
+
+# Gunicorn/FastAPI: http://localhost/docs
+# Flower: http://localhost:5559 (use admin for the username and password)
+# RabbitMQ dashboard: http://localhost:15672 (use admin for the username and password)
+
+# 2. remove
+
+$ docker-compose -f docker-compose.prod.yml -p fastapi-celery-prod stop
+$ docker-compose -f docker-compose.prod.yml -p fastapi-celery-prod down -v
+$ docker-compose -f docker-compose.prod.yml -p fastapi-celery-prod ps
+
+# 3. setup DigitalOcean
+
+#(local)$ export DIGITAL_OCEAN_ACCESS_TOKEN=[your_digital_ocean_token]
+#
+## create Droplet
+# (local)$ curl -X POST "https://api.digitalocean.com/v2/droplets" \
+#     -H "Authorization: Bearer $DIGITAL_OCEAN_ACCESS_TOKEN" \
+#     -d '{"name":"fastapi-celery-app","region":"sfo3","size":"s-2vcpu-4gb","image":"docker-18-04"}' \
+#     -H "Content-Type: application/json"
+#
+## check status
+# (local)$ curl \
+#     -H 'Content-Type: application/json' \
+#     -H 'Authorization: Bearer '$DIGITAL_OCEAN_ACCESS_TOKEN'' \
+#     "https://api.digitalocean.com/v2/droplets?fastapi-celery-app"
+
+# 4. generate an SSH key
+
+(local)$ ssh root@<YOUR_INSTANCE_IP>
+
+(server)$ ssh-keygen -t rsa
+(server)$ cat ~/.ssh/id_rsa.pub > ~/.ssh/authorized_keys
+(server)$ cat ~/.ssh/id_rsa
+
+(local)$ export PRIVATE_KEY='-----BEGIN RSA PRIVATE KEY-----
+MIIEowIBAAKCAQEAqy8065H+/bn6e0NbPdoKgl7BI8bCLwJ2W1goI6UfVKN/w40P
+yVEu0QDJgvZuzLqBEvZkeookpvYotQ4TddfY2ksVf3svDXsd6NZClJ/e8LawwVoP
+VXL9Pdbo8X7PtCmvdD/lvuhcg8iFhwJR8YqxeZhRvds5PzwIhYx9/n7f3y6goR0s
+8J71z47xZs6phQD96o3dG692E8gUBbt525p08+ysOQBLbv8DTdv0xoCOkV83I2z1
+...
+-----END RSA PRIVATE KEY-----'
+(local)$ ssh-add - <<< "${PRIVATE_KEY}"
+(local)$ ssh -o StrictHostKeyChecking=no root@<YOUR_INSTANCE_IP> whoami
+
+# 5. final checking
+
+(local)$ export DIGITAL_OCEAN_IP_ADDRESS=<YOUR_INSTANCE_IP>
+(local)$ bash compose/auto_deploy_do.sh
+# Uploading project...
+# Uploaded complete.
+# Building image...
+# ...
+# fastapi-celery-app: stopped  # after supervisard setup
+# fastapi-celery-app: started  # after supervisard setup
+# Build complete.
+
+(server)$ cd /app
+(server)$ docker-compose -f docker-compose.prod.yml up
+
+# 6. setup Supervisor
+
+(server)$ apt-get update
+(server)$ apt-get install -y supervisor
+(server)$ nano /etc/supervisor/conf.d/fastapi-celery-app.conf
+# [program:fastapi-celery-app]
+# directory=/app
+# command=docker-compose -f docker-compose.prod.yml up
+# autostart=true
+# autorestart=true
+
+(server)$ supervisorctl
+# supervisor> reload
+# Really restart the remote supervisord process y/N? y
+# Restarted supervisord
+#
+# supervisor> status
+# fastapi-celery-app                       STARTING
+#
+# supervisor> status
+# fastapi-celery-app                       RUNNING   pid 10955, uptime 0:00:04
+
+# - deployment
+
+
+# + monitoring
+$ docker-compose -f docker-compose.prod.yml -p fastapi-celery-prod up -d --build
+
+$ docker-compose -f docker-compose.prod.yml -p fastapi-celery-prod exec web bash
+# обзор текущих настроек и статистики celery в ком. строке:
+(container)$ celery -A project.asgi.celery inspect stats
+# обзор текущих и запланированных задач в ком. строке:
+(container)$ celery -A project.asgi.celery inspect active
+(container)$ celery -A project.asgi.celery inspect scheduled
+
+# проверка очередей напрямую в redis:
+$ docker-compose -f docker-compose.prod.yml -p fastapi-celery-prod exec redis sh
+(container)$ redis-cli llen default
+# (integer) 19
+
+# проверка очередей в RabbitMQ
+$ docker-compose -f docker-compose.prod.yml -p fastapi-celery-prod exec rabbitmq sh
+(container)$ rabbitmqctl list_queues name messages messages_ready messages_unacknowledged
+
+# Timeout: 60.0 seconds ...
+# Listing queues for vhost / ...
+# name    messages        messages_ready  messages_unacknowledged
+# celery@adafdf630408.celery.pidbox       0       0       0
+# high_priority   0       0       0
+# default 984     968     16
+# celeryev.f9e18141-15f4-4fea-906b-0b46a45d1c7e   0       0       0
+# low_priority    0       0       0
+# celeryev.726dd699-d7d8-46fa-868d-952419a5935c   0       0       0
+# - monitoring
+
+# + cAdvisor
+
+# docker run --volume=/:/rootfs:ro --volume=/var/run:/var/run:rw --volume=/sys:/sys:ro --volume=/var/lib/docker/:/var/lib/docker:ro --publish=8080:8080 --detach=true --name=cadvisor google/cadvisor
+
+$ docker run \
+  --volume=/:/rootfs:ro \
+  --volume=/var/run:/var/run:rw \
+  --volume=/sys:/sys:ro \
+  --volume=/var/lib/docker/:/var/lib/docker:ro \
+  --publish=8080:8080 \
+  --detach=true \
+  --name=cadvisor \
+  google/cadvisor
+
+# If you have trouble with the above command on Mac,
+# try to add --volume=/var/run/docker.sock:/var/run/docker.sock:ro
+# and check this Github issue: https://github.com/google/cadvisor/issues/1565
+
+prometheus:
+http://localhost:9090/graph
+query: container_memory_usage_bytes{name="fastapi-celery-prod_celery_worker_1"}
+# - cAdvisor
+
+
+# + best practics
+
+# 1. SSL is more secure so it's highly recommended.
+
+CELERY_BROKER_USE_SSL = True
+CELERY_REDIS_BACKEND_USE_SSL = True
+
+REDIS_URL = "rediss://{username}:{password}@{host}:{port}?ssl_cert_reqs=CERT_NONE"
+CELERY_BROKER_URL = REDIS_URL
+
+# 2. As mentioned, it's recommended to change the default queue name from celery to default
+#    and to set CELERY_TASK_CREATE_MISSING_QUEUES to False to prevent typos in your code. For example:
+
+# CELERY_TASK_DEFAULT_QUEUE: str = "default"
+
+# 3. Celery's method for prefetching is not very efficient, both dynamically and globally. It can actually cause problems quite often.
+#    We recommend limiting prefetching to one so that each worker gets only one message at a time:
+
+# CELERY_WORKER_PREFETCH_MULTIPLIER = 1
+
+# 4. Celery workers send an acknowledgement back to the message broker after a task is picked up from the queue.
+#    The broker will usually respond by removing the task from the queue.
+#    This can cause problems if the worker dies while running the task and the task has been removed from the queue.
+
+# CELERY_TASK_ACKS_LATE = True
+
+# 5. Time limit
+# a)
+# CELERY_TASK_SOFT_TIME_LIMIT = 15 * 60
+# CELERY_TASK_TIME_LIMIT = CELERY_TASK_SOFT_TIME_LIMIT + 30
+
+# b)
+# # per task when defined
+# @celery.task(time_limit=30, soft_time_limit=10)
+# def your_task():
+#     try:
+#         return do_something()
+#     except SoftTimeLimitExceeded:
+#         cleanup_in_a_hurry()
+
+# c)
+# # per task when called
+# your_task.apply_async(args=[], kwargs={}, time_limit=30, soft_time_limit=10)
+
+# If the task exceeds the soft limit, SoftTimeLimitExceeded will be raised.
+
+# Serializer
+
+# CELERY_TASK_SERIALIZER = json
+
+# https://docs.celeryq.dev/en/stable/history/whatsnew-4.0.html?highlight=ofair#ofair-is-now-the-default-scheduling-strategy
+# https://docs.celeryq.dev/en/stable/userguide/tasks.html#state
+# https://docs.celeryq.dev/en/stable/userguide/canvas.html
+# https://docs.celeryq.dev/en/stable/userguide/optimizing.html
+# https://devchecklists.com/celery-tasks-checklist/
+
+# - best practics
