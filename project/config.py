@@ -11,19 +11,29 @@ def route_task(name, args, kwargs, options, task=None, **kw):
         queue, _ = name.split(":")
         return {"queue": queue}
     return {"queue": "default"}
+
+
 # - Celery routing example
 
 
 class BaseConfig:
     BASE_DIR: pathlib.Path = pathlib.Path(__file__).parent.parent
 
-    DATABASE_URL: str = os.environ.get("DATABASE_URL", f"sqlite:///{BASE_DIR}/db.sqlite3")
+    DATABASE_URL: str = os.environ.get(
+        "DATABASE_URL", f"sqlite:///{BASE_DIR}/db.sqlite3"
+    )
     DATABASE_CONNECT_DICT: dict = {}
 
-    CELERY_BROKER_URL: str = os.environ.get("CELERY_BROKER_URL", "redis://127.0.0.1:6379/0")
-    CELERY_RESULT_BACKEND: str = os.environ.get("CELERY_RESULT_BACKEND", "redis://127.0.0.1:6379/0")
+    CELERY_BROKER_URL: str = os.environ.get(
+        "CELERY_BROKER_URL", "redis://127.0.0.1:6379/0"
+    )
+    CELERY_RESULT_BACKEND: str = os.environ.get(
+        "CELERY_RESULT_BACKEND", "redis://127.0.0.1:6379/0"
+    )
 
-    WS_MESSAGE_QUEUE: str = os.environ.get("WS_MESSAGE_QUEUE", "redis://127.0.0.1:6379/0")
+    WS_MESSAGE_QUEUE: str = os.environ.get(
+        "WS_MESSAGE_QUEUE", "redis://127.0.0.1:6379/0"
+    )
 
     # + Celery Beat example
     CELERY_BEAT_SCHEDULE: dict = {
@@ -91,7 +101,7 @@ def get_settings():
     config_cls_dict = {
         "development": DevelopmentConfig,
         "production": ProductionConfig,
-        "testing": TestingConfig
+        "testing": TestingConfig,
     }
 
     config_name = os.environ.get("FASTAPI_CONFIG", "development")

@@ -1,23 +1,25 @@
 import os
 
-from fastapi import FastAPI, File, UploadFile, Depends, Form
+from fastapi import Depends, FastAPI, File, Form, UploadFile
 from sqlalchemy.orm import Session
 
-from . import tdd_router
-from project.database import get_db_session
 from project.config import settings
+from project.database import get_db_session
 from project.tdd.models import Member
 from project.tdd.tasks import generate_avatar_thumbnail
+
+from . import tdd_router
 
 
 # + tdd example
 
+
 @tdd_router.post("/member_signup/")
 def member_signup(
-        username: str = Form(...),
-        email: str = Form(...),
-        upload_file: UploadFile = File(...),
-        session: Session = Depends(get_db_session)
+    username: str = Form(...),
+    email: str = Form(...),
+    upload_file: UploadFile = File(...),
+    session: Session = Depends(get_db_session),
 ):
     """
     https://stackoverflow.com/questions/63580229/how-to-save-uploadfile-in-fastapi
@@ -45,5 +47,6 @@ def member_signup(
 
     generate_avatar_thumbnail.delay(member_id)
     return {"message": "Sign up successful"}
+
 
 # - tdd example
