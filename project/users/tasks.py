@@ -1,11 +1,9 @@
-import logging
 import random
-from logging.handlers import WatchedFileHandler
 
 import requests
 from asgiref.sync import async_to_sync
 from celery import Task, shared_task
-from celery.signals import after_setup_logger, task_postrun
+from celery.signals import task_postrun
 from celery.utils.log import get_task_logger
 
 from project.celery_utils import custom_celery_task

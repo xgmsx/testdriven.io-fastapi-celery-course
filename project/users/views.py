@@ -3,7 +3,7 @@ import random
 
 import requests
 from celery.result import AsyncResult
-from fastapi import Body, Depends, FastAPI, Request
+from fastapi import Depends, Request
 from fastapi.responses import JSONResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
@@ -116,7 +116,7 @@ def transaction_celery(session: Session = Depends(get_db_session)):
         )
         session.add(user)
         session.commit()
-    except Exception as e:
+    except Exception:
         session.rollback()
         raise
 
@@ -149,7 +149,7 @@ def user_subscribe(user_body: UserBody, session: Session = Depends(get_db_sessio
             session.add(user)
             session.commit()
             user_id = user.id
-    except Exception as e:
+    except Exception:
         session.rollback()
         raise
 

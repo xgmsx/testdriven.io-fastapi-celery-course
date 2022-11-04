@@ -1,6 +1,6 @@
 import os
 
-from fastapi import Depends, FastAPI, File, Form, UploadFile
+from fastapi import Depends, File, Form, UploadFile
 from sqlalchemy.orm import Session
 
 from project.config import settings
@@ -41,7 +41,7 @@ def member_signup(
         session.add(member)
         session.commit()
         member_id = member.id
-    except Exception as e:
+    except Exception:
         session.rollback()
         raise
 
