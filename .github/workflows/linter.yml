@@ -12,5 +12,5 @@ jobs:
         source: "project"
         strict: "low"
         mypy-options: "--ignore-missing-imports --show-error-codes"
-        isort-options: "-w 100"
+        isort-options: "-w 120"
         black-options: "-l 120"
