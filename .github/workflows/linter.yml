@@ -13,4 +13,4 @@ jobs:
         strict: "low"
         mypy-options: "--ignore-missing-imports --show-error-codes"
         isort-options: "-w 120"
-        black-options: "-l 120"
+        black-options: "-l 120 --diff"
