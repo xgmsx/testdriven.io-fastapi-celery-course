@@ -58,9 +58,7 @@ def register_socketio_app(app: FastAPI):
     mgr = socketio.AsyncRedisManager(settings.WS_MESSAGE_QUEUE)
     # https://python-socketio.readthedocs.io/en/latest/server.html#uvicorn-daphne-and-other-asgi-servers
     # https://github.com/tiangolo/fastapi/issues/129#issuecomment-714636723
-    sio = socketio.AsyncServer(
-        async_mode="asgi", client_manager=mgr, logger=True, engineio_logger=True
-    )
+    sio = socketio.AsyncServer(async_mode="asgi", client_manager=mgr, logger=True, engineio_logger=True)
     sio.register_namespace(TaskStatusNameSpace("/task_status"))
     asgi = socketio.ASGIApp(
         socketio_server=sio,
@@ -76,9 +74,7 @@ def update_celery_task_status_socketio(task_id):
     # connect to the redis queue as an external process
     external_sio = socketio.RedisManager(settings.WS_MESSAGE_QUEUE, write_only=True)
     # emit an event
-    external_sio.emit(
-        "status", get_task_info(task_id), room=task_id, namespace="/task_status"
-    )
+    external_sio.emit("status", get_task_info(task_id), room=task_id, namespace="/task_status")
 
 
 # - Socket.io example
