@@ -19,8 +19,6 @@ from .tasks import (
 from .models import User
 from .utils import random_username
 from project.database import get_db_session
-
-
 logger = logging.getLogger(__name__)
 templates = Jinja2Templates(directory="project/users/templates")
 
