@@ -11,6 +11,8 @@ def route_task(name, args, kwargs, options, task=None, **kw):
         queue, _ = name.split(":")
         return {"queue": queue}
     return {"queue": "default"}
+
+
 # - Celery routing example
 
 
@@ -39,12 +41,12 @@ class BaseConfig:
     CELERY_TASK_DEFAULT_QUEUE: str = "default"
     # Force all queues to be explicitly listed in `CELERY_TASK_QUEUES` to help prevent typos
     CELERY_TASK_CREATE_MISSING_QUEUES: bool = False
-    CELERY_TASK_QUEUES: list = (
+    CELERY_TASK_QUEUES: list = [
         # need to define default queue here or exception would be raised
         Queue("default"),
         Queue("high_priority"),
         Queue("low_priority"),
-    )
+    ]
     # - Celery multiple queues example
 
     # + Best practics
@@ -91,7 +93,7 @@ def get_settings():
     config_cls_dict = {
         "development": DevelopmentConfig,
         "production": ProductionConfig,
-        "testing": TestingConfig
+        "testing": TestingConfig,
     }
 
     config_name = os.environ.get("FASTAPI_CONFIG", "development")

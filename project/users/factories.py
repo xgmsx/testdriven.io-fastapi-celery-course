@@ -8,6 +8,7 @@ from project.users.models import User
 
 # + pytest example
 
+
 class UserFactory(factory.alchemy.SQLAlchemyModelFactory):
     class Meta:
         model = User
@@ -17,5 +18,6 @@ class UserFactory(factory.alchemy.SQLAlchemyModelFactory):
 
     username = FuzzyText(length=6)
     email = LazyAttribute(lambda o: "%s@example.com" % o.username)
+
 
 # - pytest example
