@@ -2,13 +2,15 @@ name: Linter
 on: [ push, pull_request ]
 
 jobs:
-    lint:
-        runs-on: ubuntu-latest
-        steps:
-        - name: Python Linter
-          uses: sunnysid3up/python-linter@master
-          with:
-              source: "project"
-              mypy-options: "--ignore-missing-imports --show-error-codes"
-              pylint-options: "--rcfile=setup.cfg"
-              isort-options: "-w 120"
+  label-lint:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Python Linter
+      uses: sunnysid3up/python-linter@master
+      with:
+        source: "project"
+        strict: "low"
+        mypy-options: "--ignore-missing-imports --show-error-codes"
+        isort-options: "-w 100"
+        black-options: "-l 120"
