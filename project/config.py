@@ -69,6 +69,8 @@ class BaseConfig:
     CELERY_TASK_ROUTES = (route_task,)
     # - Celery routing example
 
+    # add comment
+
     # + tdd example
     UPLOADS_DEFAULT_DEST: str = str(BASE_DIR / "upload")
     # - tdd example
