@@ -1,15 +1,19 @@
 language: python
 os:
   - linux
+dist:
+  - focal
+env:
+  - FASTAPI_CONFIG=testing
 python:
   - 3.8.10
   - 3.9
   - 3.10
-env:
-  - FASTAPI_CONFIG=testing
+
 before_install:
   - pip install -r requirements.txt
 script:
+  - pip install coverage
   - coverage run --source=project -m pytest discover
 after_success:
   - coverage report
