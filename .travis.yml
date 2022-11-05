@@ -14,7 +14,7 @@ before_install:
   - pip install -r requirements.txt
 script:
   - pip install coverage
-  - coverage run --source=project -m pytest tests
+  - coverage run --source=project -m pytest tests/tdd
 after_success:
   - coverage report
   - if [[ $(python3 -V 2>&1) == *"Python 3.8.10"* ]]; then
