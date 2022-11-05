@@ -1,0 +1,17 @@
+language: python
+os:
+  - linux
+python:
+  - 3.8.10
+  - 3.9
+  - 3.10
+before_install:
+  - pip install -r requirements.txt
+script:
+  - coverage run --source=project -m pytest discover
+after_success:
+  - coverage report
+  - if [[ $(python3 -V 2>&1) == *"Python 3.8.10"* ]]; then
+      pip install python-coveralls;
+      coveralls;
+    fi
