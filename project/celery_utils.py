@@ -1,6 +1,7 @@
 import functools
 
-from celery import current_app as current_celery_app, shared_task
+from celery import current_app as current_celery_app
+from celery import shared_task
 from celery.result import AsyncResult
 from celery.utils.time import get_exponential_backoff_interval
 
@@ -32,6 +33,7 @@ def get_task_info(task_id: str):
 
 
 # + Custom task wrapper
+
 
 class custom_celery_task:
 
@@ -72,9 +74,10 @@ class custom_celery_task:
             factor=retry_backoff,
             retries=task_func.request.retries,
             maximum=retry_backoff_max,
-            full_jitter=retry_jitter
+            full_jitter=retry_jitter,
         )
 
         return countdown
+
 
 # - Custom task wrapper

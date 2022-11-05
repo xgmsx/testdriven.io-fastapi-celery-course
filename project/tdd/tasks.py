@@ -13,16 +13,10 @@ def generate_avatar_thumbnail(member_pk):
     with db_context() as session:
         member = session.query(Member).get(member_pk)
 
-        full_path = os.path.join(
-            settings.UPLOADS_DEFAULT_DEST,
-            member.avatar
-        )
+        full_path = os.path.join(settings.UPLOADS_DEFAULT_DEST, member.avatar)
 
         thumbnail_path = f"{member.id}-avatar-thumbnail.jpg"
-        thumbnail_full_path = os.path.join(
-            settings.UPLOADS_DEFAULT_DEST,
-            thumbnail_path
-        )
+        thumbnail_full_path = os.path.join(settings.UPLOADS_DEFAULT_DEST, thumbnail_path)
 
         im = Image.open(full_path)
         size = (100, 100)

@@ -30,10 +30,7 @@ class MemberFactory(factory.alchemy.SQLAlchemyModelFactory):
 
         with Image.new(image_palette, (width, height), color) as thumb:
             filename = f"{self.username}.jpg"
-            full_path = os.path.join(
-                settings.UPLOADS_DEFAULT_DEST,
-                filename
-            )
+            full_path = os.path.join(settings.UPLOADS_DEFAULT_DEST, filename)
             thumb.save(full_path, format=image_format)
 
         return filename
